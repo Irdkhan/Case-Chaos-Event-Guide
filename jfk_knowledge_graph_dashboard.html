@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JFK Assassination — Knowledge Graph Analysis | Group 9</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --navy2: #1a2a3a;
+    --navy3: #243447;
+    --gold: #c8a84b;
+    --gold2: #e8c56b;
+    --teal: #2a9d8f;
+    --teal2: #3bbfb0;
+    --coral: #e76f51;
+    --purple: #534ab7;
+    --text: #e8e4d9;
+    --text2: #b0a890;
+    --text3: #7a7060;
+    --border: rgba(200,168,75,0.18);
+    --card-bg: rgba(26,42,58,0.85);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,27,42,0.97);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 56px;
+    backdrop-filter: blur(8px);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand .badge {
+    background: var(--gold); color: var(--navy);
+    font-size: 11px; font-weight: 700; padding: 2px 8px;
+    border-radius: 3px; letter-spacing: 1px;
+  }
+  .nav-brand span { font-size: 14px; color: var(--text2); font-family: sans-serif; }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a {
+    color: var(--text2); text-decoration: none; font-size: 13px;
+    font-family: sans-serif; letter-spacing: 0.5px;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .group-tag {
+    font-size: 12px; color: var(--text3); font-family: sans-serif;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 5rem 2rem 4rem;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 50%, rgba(200,168,75,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 10% 80%, rgba(42,157,143,0.05) 0%, transparent 70%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(200,168,75,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(200,168,75,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hero-content { position: relative; max-width: 900px; }
+  .hero-eyebrow {
+    font-family: sans-serif; font-size: 12px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block; width: 30px; height: 1px;
+    background: var(--gold);
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1.15; margin-bottom: 1.5rem;
+    color: var(--text);
+  }
+  h1 em { font-style: normal; color: var(--gold); }
+  .hero-sub {
+    font-size: 1.1rem; color: var(--text2); max-width: 640px;
+    margin-bottom: 2.5rem; font-family: sans-serif; line-height: 1.6;
+  }
+  .hero-stats {
+    display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 3rem;
+  }
+  .hstat {
+    display: flex; flex-direction: column;
+    border-left: 2px solid var(--gold);
+    padding-left: 1rem;
+  }
+  .hstat-num { font-size: 2rem; font-weight: 700; color: var(--gold2); line-height: 1; }
+  .hstat-lbl { font-size: 12px; color: var(--text3); font-family: sans-serif; letter-spacing: 0.5px; margin-top: 4px; }
+  .hero-source {
+    background: rgba(200,168,75,0.08);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem 1.5rem;
+    max-width: 640px;
+  }
+  .source-label { font-size: 11px; letter-spacing: 2px; color: var(--gold); font-family: sans-serif; margin-bottom: 6px; }
+  .source-text { font-size: 14px; color: var(--text2); font-family: sans-serif; line-height: 1.6; }
+  .source-text a { color: var(--gold2); }
+
+  /* ── SECTIONS ── */
+  .section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-header { margin-bottom: 3rem; }
+  .section-num {
+    font-family: sans-serif; font-size: 12px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: var(--text); margin-bottom: 0.75rem;
+  }
+  h2 em { color: var(--gold); font-style: normal; }
+  .section-deck {
+    font-size: 1rem; color: var(--text2); font-family: sans-serif;
+    max-width: 700px; line-height: 1.7;
+  }
+  .divider {
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, var(--gold) 0%, transparent 60%);
+    margin: 4px 0 1.5rem;
+  }
+
+  /* ── SOURCE STORY ── */
+  .story-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .story-card::before {
+    content: '\201C'; font-size: 8rem; color: var(--gold);
+    opacity: 0.08; position: absolute; top: -1rem; left: 1rem;
+    line-height: 1; font-family: Georgia, serif;
+  }
+  .story-meta {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .meta-tag {
+    font-family: sans-serif; font-size: 11px; letter-spacing: 1.5px;
+    padding: 3px 10px; border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .meta-tag.source { background: rgba(200,168,75,0.15); color: var(--gold2); }
+  .meta-tag.year { background: rgba(42,157,143,0.15); color: var(--teal2); }
+  .meta-tag.type { background: rgba(83,74,183,0.2); color: #a09fe0; }
+  .story-body {
+    font-size: 1rem; line-height: 1.9; color: var(--text);
+    column-gap: 2rem;
+  }
+  .story-body p { margin-bottom: 1.2rem; }
+  .story-body p:last-child { margin-bottom: 0; }
+  .highlight { color: var(--gold2); font-weight: 600; }
+  .story-body em { color: var(--teal2); font-style: italic; }
+
+  /* ── KNOWLEDGE GRAPH ── */
+  #kg-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  #kg-wrap svg { width: 100%; border-radius: 8px; }
+  #kg-controls {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1.5rem;
+    align-items: center;
+  }
+  .kg-btn {
+    font-family: sans-serif; font-size: 12px; padding: 5px 14px;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--text2); cursor: pointer;
+    transition: all .2s; letter-spacing: 0.5px;
+  }
+  .kg-btn:hover, .kg-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+  #kg-tooltip {
+    position: fixed; pointer-events: none;
+    background: rgba(13,27,42,0.97); border: 1px solid var(--gold);
+    border-radius: 8px; padding: 10px 14px;
+    font-family: sans-serif; font-size: 13px; color: var(--text);
+    max-width: 240px; line-height: 1.5;
+    display: none; z-index: 999;
+  }
+  #kg-tooltip .tt-title { color: var(--gold2); font-weight: 600; margin-bottom: 4px; }
+  #kg-tooltip .tt-type { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  #kg-legend {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 1rem;
+    font-family: sans-serif; font-size: 12px; color: var(--text2);
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── NLP PIPELINE ── */
+  .pipeline {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+  .pipe-step {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.5rem;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .pipe-step:hover { border-color: var(--gold); }
+  .pipe-num {
+    font-size: 2.5rem; font-weight: 700; color: var(--gold);
+    opacity: 0.25; line-height: 1; margin-bottom: 0.5rem;
+    font-family: sans-serif;
+  }
+  .pipe-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text); }
+  .pipe-sub { font-size: 13px; color: var(--text3); font-family: sans-serif; margin-bottom: 0.8rem; font-style: italic; }
+  .pipe-body { font-size: 14px; color: var(--text2); font-family: sans-serif; line-height: 1.6; }
+  .pipe-example {
+    margin-top: 0.8rem; background: rgba(200,168,75,0.07);
+    border-left: 2px solid var(--gold); padding: 6px 10px;
+    font-size: 12px; color: var(--gold2); font-family: monospace;
+  }
+
+  /* ── ENTITY TABLE ── */
+  .entity-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  .entity-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem;
+    display: flex; gap: 12px; align-items: flex-start;
+    transition: border-color .2s;
+  }
+  .entity-card:hover { border-color: rgba(200,168,75,0.4); }
+  .entity-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0; font-family: sans-serif;
+  }
+  .entity-info { flex: 1; min-width: 0; }
+  .entity-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .entity-type { font-size: 11px; letter-spacing: 1px; font-family: sans-serif; margin-bottom: 6px; }
+  .entity-desc { font-size: 13px; color: var(--text2); font-family: sans-serif; line-height: 1.5; }
+
+  /* ── RELATIONS ── */
+  .rel-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 14px; }
+  thead { background: rgba(200,168,75,0.12); }
+  th { padding: 12px 16px; text-align: left; font-size: 11px; letter-spacing: 1.5px; color: var(--gold); font-weight: 600; text-transform: uppercase; }
+  td { padding: 11px 16px; border-top: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  tr:hover td { background: rgba(200,168,75,0.04); }
+  .rel-badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 4px; font-style: italic; color: var(--teal2);
+    background: rgba(42,157,143,0.12);
+  }
+  .weight-h { color: var(--gold2); font-weight: 600; }
+  .weight-m { color: var(--teal2); }
+  .weight-l { color: var(--text3); }
+
+  /* ── STORY / CONCLUSION ── */
+  .acts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .act-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem; position: relative; overflow: hidden;
+    transition: transform .2s;
+  }
+  .act-card:hover { transform: translateY(-2px); }
+  .act-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .act-num { font-size: 11px; letter-spacing: 2px; font-family: sans-serif; margin-bottom: 6px; }
+  .act-title { font-size: 1.25rem; margin-bottom: 1rem; }
+  .act-body { font-size: 14px; color: var(--text2); font-family: sans-serif; line-height: 1.7; }
+  .act-insight {
+    margin-top: 1rem; padding: 10px 14px;
+    border-left: 2px solid; font-size: 13px;
+    font-family: sans-serif; line-height: 1.6; font-style: italic;
+  }
+
+  /* ── CONCLUSION / FINDINGS ── */
+  .findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+  .finding {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.5rem;
+    display: grid; grid-template-rows: auto 1fr;
+  }
+  .finding-num {
+    font-size: 3rem; font-weight: 700; color: var(--gold);
+    opacity: 0.15; line-height: 1; font-family: sans-serif;
+    margin-bottom: 0.5rem;
+  }
+  .finding-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.6rem; }
+  .finding-body { font-size: 14px; color: var(--text2); font-family: sans-serif; line-height: 1.6; }
+
+  /* ── CONCLUSION BOX ── */
+  .conclusion-box {
+    background: linear-gradient(135deg, rgba(200,168,75,0.1) 0%, rgba(42,157,143,0.06) 100%);
+    border: 1px solid rgba(200,168,75,0.3);
+    border-radius: 14px; padding: 3rem;
+    text-align: center; margin-top: 3rem;
+  }
+  .conclusion-box h3 { font-size: 1.6rem; margin-bottom: 1rem; color: var(--gold2); }
+  .conclusion-box p { font-size: 1rem; color: var(--text2); font-family: sans-serif; max-width: 700px; margin: 0 auto 1rem; line-height: 1.8; }
+  .conclusion-box .verdict {
+    font-size: 1.1rem; color: var(--text); background: rgba(200,168,75,0.08);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.5rem; max-width: 600px; margin: 1.5rem auto 0;
+    font-style: italic;
+  }
+
+  /* ── MBA APPLICATION ── */
+  .mba-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .mba-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem;
+  }
+  .mba-card-title { font-size: 14px; font-weight: 600; color: var(--gold2); margin-bottom: 6px; }
+  .mba-card-body { font-size: 13px; color: var(--text2); font-family: sans-serif; line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem; text-align: center;
+    font-family: sans-serif; font-size: 13px; color: var(--text3);
+  }
+  footer strong { color: var(--text2); }
+  .team-names { margin-top: 12px; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+  .team-name { color: var(--gold2); font-size: 13px; }
+
+  /* ── SCROLL SECTIONS ── */
+  .full-w { max-width: none; }
+  .sep {
+    width: 100%; height: 1px;
+    background: var(--border);
+    margin: 0;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .hero-stats { gap: 1.2rem; }
+    .nav-links { display: none; }
+    .section { padding: 3rem 1.2rem; }
+    .hero { padding: 4rem 1.2rem 3rem; }
+    .story-body { column-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="badge">GROUP 9</div>
+    <span>NLP Assignment · BITS Pilani</span>
+  </div>
+  <div class="nav-links">
+    <a href="#story">Source</a>
+    <a href="#graph">Graph</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#entities">Entities</a>
+    <a href="#narrative">Story</a>
+    <a href="#findings">Findings</a>
+  </div>
+  <div class="group-tag">MBA Business Analytics · 2026</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">NLP Assignment · Knowledge Graph Analysis</div>
+    <h1>Who Killed <em>JFK?</em><br>A Knowledge Graph Investigation</h1>
+    <p class="hero-sub">
+      We applied Natural Language Processing to the JFK assassination conspiracy theory — extracting entities, mapping relationships, and letting the graph tell the story. Here is what we found.
+    </p>
+    <div class="hero-stats">
+      <div class="hstat"><span class="hstat-num">18</span><span class="hstat-lbl">Entities in graph</span></div>
+      <div class="hstat"><span class="hstat-num">24</span><span class="hstat-lbl">Typed relations</span></div>
+      <div class="hstat"><span class="hstat-num">3</span><span class="hstat-lbl">Narrative acts</span></div>
+      <div class="hstat"><span class="hstat-num">60+</span><span class="hstat-lbl">Years of inquiry</span></div>
+    </div>
+    <div class="hero-source">
+      <div class="source-label">Source Document</div>
+      <div class="source-text">
+        Gerald D. McKnight, <em>Breach of Trust: How the Warren Commission Failed the Nation and Why</em> (University Press of Kansas, 2005) — Cross-referenced with the U.S. House Select Committee on Assassinations final report (1979) and the JFK Records Act declassified documents (2017–2023).
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SOURCE STORY -->
+<section class="section" id="story">
+  <div class="section-header">
+    <div class="section-num">01 · Source Material</div>
+    <h2>The <em>Theory</em> — In Plain English</h2>
+    <div class="divider"></div>
+    <p class="section-deck">
+      Before we build the graph, we need a story to work from. Here is the JFK conspiracy theory as documented in the source — in straightforward language.
+    </p>
+  </div>
+  <div class="story-card">
+    <div class="story-meta">
+      <span class="meta-tag source">Source: McKnight (2005) + HSCA (1979)</span>
+      <span class="meta-tag year">Event: November 22, 1963</span>
+      <span class="meta-tag type">Conspiracy Theory</span>
+    </div>
+    <div class="story-body" style="column-count:2;">
+      <p>
+        On November 22, 1963, <span class="highlight">President John F. Kennedy</span> was shot and killed while riding in a motorcade through Dealey Plaza in Dallas, Texas. The Warren Commission, set up by President Johnson to investigate, concluded in 1964 that <span class="highlight">Lee Harvey Oswald</span> acted alone — firing three shots from the sixth floor of the Texas School Book Depository.
+      </p>
+      <p>
+        But critics of that conclusion — including historian Gerald McKnight and the later <span class="highlight">House Select Committee on Assassinations (HSCA)</span> in 1979 — argued that the evidence pointed elsewhere. The HSCA concluded there was <em>"probably a conspiracy"</em>, finding acoustic evidence of a second gunman firing from the <span class="highlight">Grassy Knoll</span> in front of the motorcade.
+      </p>
+      <p>
+        The theory points to several suspicious actors. <span class="highlight">Jack Ruby</span>, a Dallas nightclub owner with known ties to organized crime, shot and killed Oswald just two days after the assassination — silencing the only suspect before he could talk. Oswald himself had connections to both the <span class="highlight">CIA</span> and to pro-Cuba groups, and had defected to the Soviet Union before returning to the US.
+      </p>
+      <p>
+        The <span class="highlight">Warren Commission</span> is accused of suppressing evidence. Key witnesses described hearing shots from multiple directions. The <em>"magic bullet theory"</em> — which required a single bullet to change direction multiple times to cause seven wounds — was widely ridiculed. <span class="highlight">J. Edgar Hoover</span> (FBI Director) and the <span class="highlight">CIA</span> both withheld information from the Commission, according to later investigations.
+      </p>
+      <p>
+        McKnight's research argues that the Commission knew its "lone gunman" conclusion was flawed but chose political stability over truth. The <span class="highlight">CIA</span>, the <span class="highlight">Mafia</span>, <span class="highlight">anti-Castro Cuban exiles</span>, and even factions within the <span class="highlight">US military</span> had documented motives to want Kennedy dead — he had rejected the Bay of Pigs invasion plan, was negotiating with Cuba, and was considering withdrawing from Vietnam.
+      </p>
+      <p>
+        The declassified JFK Records (2017–2023) revealed that the CIA had withheld files on Oswald for over 50 years, and that surveillance of Oswald in Mexico City weeks before the shooting had been deliberately obscured. The graph built from this network of actors and events tells a story very different from the official one.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- KNOWLEDGE GRAPH -->
+<section class="section" id="graph" style="max-width:1200px;">
+  <div class="section-header">
+    <div class="section-num">02 · Knowledge Graph</div>
+    <h2>The <em>Network</em> of Power</h2>
+    <div class="divider"></div>
+    <p class="section-deck">
+      Each node is an entity. Each line is a relationship. The size of a node reflects how many connections it has. Click any node to learn more.
+    </p>
+  </div>
+  <div id="kg-wrap">
+    <div id="kg-controls">
+      <span style="font-family:sans-serif;font-size:12px;color:var(--text3);letter-spacing:1px;">FILTER:</span>
+      <button class="kg-btn active" onclick="filterGraph('all',this)">All nodes</button>
+      <button class="kg-btn" onclick="filterGraph('Person',this)">People</button>
+      <button class="kg-btn" onclick="filterGraph('Organization',this)">Organizations</button>
+      <button class="kg-btn" onclick="filterGraph('Event',this)">Events</button>
+      <button class="kg-btn" onclick="filterGraph('Outcome',this)">Outcomes</button>
+    </div>
+    <svg id="kg-svg" style="height:560px;display:block;width:100%;"></svg>
+    <div id="kg-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#c8a84b"></div>Person</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#2a9d8f"></div>Organization</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#e76f51"></div>Event</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#534ab7"></div>Outcome / Concept</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#888"></div>Location</div>
+      <span style="margin-left:auto;font-size:11px;">Node size = number of connections &nbsp;·&nbsp; Drag nodes to rearrange</span>
+    </div>
+  </div>
+</section>
+
+<div id="kg-tooltip"><div class="tt-title"></div><div class="tt-type"></div><div class="tt-desc"></div></div>
+
+<div class="sep"></div>
+
+<!-- NLP PIPELINE -->
+<section class="section" id="pipeline">
+  <div class="section-header">
+    <div class="section-num">03 · Methodology</div>
+    <h2>The <em>NLP Pipeline</em> We Used</h2>
+    <div class="divider"></div>
+    <p class="section-deck">Four steps to go from a pile of documents to a story-telling knowledge graph.</p>
+  </div>
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">01</div>
+      <div class="pipe-title">Find the Entities</div>
+      <div class="pipe-sub">Named Entity Recognition (NER)</div>
+      <div class="pipe-body">Read the source documents. Tag every person, organization, place, and event mentioned. Give each one a type label.</div>
+      <div class="pipe-example">
+        "Oswald" → Person<br>
+        "Warren Commission" → Org<br>
+        "Dealey Plaza" → Location
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">02</div>
+      <div class="pipe-title">Find the Links</div>
+      <div class="pipe-sub">Relation Extraction (RE)</div>
+      <div class="pipe-body">Look at how entities are described near each other in sentences. Extract typed relationship triples: (Subject → Verb → Object).</div>
+      <div class="pipe-example">
+        "Ruby shot Oswald"<br>
+        → Ruby – shot – Oswald
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">03</div>
+      <div class="pipe-title">Order the Events</div>
+      <div class="pipe-sub">Temporal Event Sequencing</div>
+      <div class="pipe-body">Place events on a timeline. Anchor each event to a date. This lets us trace what caused what — who knew who before the assassination.</div>
+      <div class="pipe-example">
+        Oct 1963: Oswald Mexico City<br>
+        Nov 22: Assassination<br>
+        Nov 24: Ruby kills Oswald
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">04</div>
+      <div class="pipe-title">Read the Story</div>
+      <div class="pipe-sub">Graph Traversal + Narrative</div>
+      <div class="pipe-body">Follow the graph paths from central nodes. The pattern of connections tells a structured narrative — without reading every document again.</div>
+      <div class="pipe-example">
+        Start: Oswald<br>
+        → CIA → Ruby → Cover-up<br>
+        → Warren Commission
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- ENTITIES -->
+<section class="section" id="entities">
+  <div class="section-header">
+    <div class="section-num">04 · Entity Catalogue</div>
+    <h2>All <em>18 Nodes</em> in the Graph</h2>
+    <div class="divider"></div>
+    <p class="section-deck">Every actor, organization, event, and concept extracted from the source — colour-coded by type.</p>
+  </div>
+  <div class="entity-grid">
+    <!-- PEOPLE -->
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(200,168,75,0.15);">👤</div>
+      <div class="entity-info">
+        <div class="entity-name">John F. Kennedy</div>
+        <div class="entity-type" style="color:var(--gold);">PERSON · Victim</div>
+        <div class="entity-desc">35th US President. Killed Nov 22, 1963. Had refused to support Bay of Pigs, was negotiating with Cuba, considering Vietnam withdrawal.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(200,168,75,0.15);">👤</div>
+      <div class="entity-info">
+        <div class="entity-name">Lee Harvey Oswald</div>
+        <div class="entity-type" style="color:var(--gold);">PERSON · Accused Shooter</div>
+        <div class="entity-desc">Ex-Marine, defected to USSR, returned to US. Had CIA contacts. Arrested within hours, killed 2 days later by Jack Ruby before trial.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(200,168,75,0.15);">👤</div>
+      <div class="entity-info">
+        <div class="entity-name">Jack Ruby</div>
+        <div class="entity-type" style="color:var(--gold);">PERSON · Silencer</div>
+        <div class="entity-desc">Dallas nightclub owner with known Mafia ties. Shot Oswald on live TV Nov 24 1963, eliminating the only suspect. Died in prison 1967.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(200,168,75,0.15);">👤</div>
+      <div class="entity-info">
+        <div class="entity-name">J. Edgar Hoover</div>
+        <div class="entity-type" style="color:var(--gold);">PERSON · FBI Director</div>
+        <div class="entity-desc">Known enemy of Robert Kennedy. Later evidence showed FBI withheld files from the Warren Commission that contradicted the lone gunman theory.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(200,168,75,0.15);">👤</div>
+      <div class="entity-info">
+        <div class="entity-name">Lyndon B. Johnson</div>
+        <div class="entity-type" style="color:var(--gold);">PERSON · Successor</div>
+        <div class="entity-desc">Vice President who became President immediately after the assassination. Set up the Warren Commission. Had documented political conflicts with JFK.</div>
+      </div>
+    </div>
+    <!-- ORGANIZATIONS -->
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(42,157,143,0.15);">🏛</div>
+      <div class="entity-info">
+        <div class="entity-name">CIA</div>
+        <div class="entity-type" style="color:var(--teal2);">ORGANIZATION · Intelligence</div>
+        <div class="entity-desc">Withheld files on Oswald for 50+ years. Had him under surveillance in Mexico City weeks before the assassination. Kennedy had fired CIA director after Bay of Pigs.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(42,157,143,0.15);">🏛</div>
+      <div class="entity-info">
+        <div class="entity-name">Warren Commission</div>
+        <div class="entity-type" style="color:var(--teal2);">ORGANIZATION · Investigation body</div>
+        <div class="entity-desc">Set up by LBJ. Concluded Oswald acted alone. McKnight argues it knew this was false but prioritized political stability. Evidence was suppressed.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(42,157,143,0.15);">🏛</div>
+      <div class="entity-info">
+        <div class="entity-name">HSCA (House Committee)</div>
+        <div class="entity-type" style="color:var(--teal2);">ORGANIZATION · Investigation body</div>
+        <div class="entity-desc">1979 Congressional investigation. Concluded "probably a conspiracy" based on acoustic evidence of a second gunman. Contradicted Warren Commission.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(42,157,143,0.15);">🏛</div>
+      <div class="entity-info">
+        <div class="entity-name">The Mafia (Organized Crime)</div>
+        <div class="entity-type" style="color:var(--teal2);">ORGANIZATION · Criminal network</div>
+        <div class="entity-desc">Had motive: RFK (JFK's brother and AG) was aggressively prosecuting the Mafia. Jack Ruby's connection to Mob figures is documented in FBI records.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(42,157,143,0.15);">🏛</div>
+      <div class="entity-info">
+        <div class="entity-name">Anti-Castro Cubans</div>
+        <div class="entity-type" style="color:var(--teal2);">ORGANIZATION · Exile group</div>
+        <div class="entity-desc">CIA-funded exile groups who felt betrayed when Kennedy refused military support for Bay of Pigs (1961). Oswald had paradoxical ties to both pro- and anti-Castro groups.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(42,157,143,0.15);">🏛</div>
+      <div class="entity-info">
+        <div class="entity-name">FBI</div>
+        <div class="entity-type" style="color:var(--teal2);">ORGANIZATION · Law enforcement</div>
+        <div class="entity-desc">Under Hoover, withheld information from the Warren Commission. Later investigations found the FBI had Oswald's full surveillance file but never shared key parts.</div>
+      </div>
+    </div>
+    <!-- EVENTS / LOCATIONS -->
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(231,111,81,0.15);">📍</div>
+      <div class="entity-info">
+        <div class="entity-name">Dealey Plaza Shooting</div>
+        <div class="entity-type" style="color:var(--coral);">EVENT · Nov 22, 1963</div>
+        <div class="entity-desc">The assassination. Multiple witnesses heard shots from different directions. The HSCA found acoustic evidence consistent with 4 shots, including one from the Grassy Knoll.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(231,111,81,0.15);">📍</div>
+      <div class="entity-info">
+        <div class="entity-name">Oswald Killing</div>
+        <div class="entity-type" style="color:var(--coral);">EVENT · Nov 24, 1963</div>
+        <div class="entity-desc">Ruby shot Oswald in Dallas Police HQ on live television — before Oswald could be questioned at trial. The most suspicious event in the entire timeline.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(231,111,81,0.15);">📍</div>
+      <div class="entity-info">
+        <div class="entity-name">Grassy Knoll</div>
+        <div class="entity-type" style="color:var(--coral);">LOCATION · Second gunman position</div>
+        <div class="entity-desc">A raised area in front and to the right of the motorcade. Witnesses reported hearing shots from this direction. HSCA acoustic analysis supported a shot from here.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(231,111,81,0.15);">📍</div>
+      <div class="entity-info">
+        <div class="entity-name">Mexico City (Oswald visit)</div>
+        <div class="entity-type" style="color:var(--coral);">EVENT · Oct 1963</div>
+        <div class="entity-desc">Weeks before the assassination, Oswald visited the Cuban and Soviet embassies in Mexico City. CIA surveillance of this visit was found to have been deliberately obscured.</div>
+      </div>
+    </div>
+    <!-- OUTCOMES -->
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(83,74,183,0.2);">⚡</div>
+      <div class="entity-info">
+        <div class="entity-name">Cover-up (alleged)</div>
+        <div class="entity-type" style="color:#a09fe0;">OUTCOME · Suppression of evidence</div>
+        <div class="entity-desc">McKnight argues the Warren Commission actively suppressed conflicting evidence. CIA withheld Oswald files for 50+ years. Key witness testimonies were ignored or discredited.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(83,74,183,0.2);">⚡</div>
+      <div class="entity-info">
+        <div class="entity-name">JFK Records Act (1992)</div>
+        <div class="entity-type" style="color:#a09fe0;">OUTCOME · Legislation</div>
+        <div class="entity-desc">Congress ordered declassification of all JFK assassination records. Releases in 2017–2023 confirmed CIA had withheld significant Oswald surveillance files.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(83,74,183,0.2);">⚡</div>
+      <div class="entity-info">
+        <div class="entity-name">"Lone Gunman" Conclusion</div>
+        <div class="entity-type" style="color:#a09fe0;">OUTCOME · Official narrative</div>
+        <div class="entity-desc">The Warren Commission's official finding. Disputed by the HSCA (1979), by 3 of the 4 most recent polls, and by many historians — but never formally overturned.</div>
+      </div>
+    </div>
+    <div class="entity-card">
+      <div class="entity-icon" style="background:rgba(83,74,183,0.2);">⚡</div>
+      <div class="entity-info">
+        <div class="entity-name">Probable Conspiracy Finding</div>
+        <div class="entity-type" style="color:#a09fe0;">OUTCOME · HSCA conclusion (1979)</div>
+        <div class="entity-desc">The HSCA's conclusion that Kennedy was probably killed as the result of a conspiracy — the most credible official challenge to the Warren Commission ever produced.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- RELATIONS TABLE -->
+<section class="section" id="relations">
+  <div class="section-header">
+    <div class="section-num">05 · Relation Triples</div>
+    <h2>The <em>Connections</em> — All 24 Edges</h2>
+    <div class="divider"></div>
+    <p class="section-deck">Each row is a fact extracted from the source. H = high confidence, M = medium.</p>
+  </div>
+  <div class="rel-table-wrap">
+    <table>
+      <thead>
+        <tr><th>From</th><th>Relation</th><th>To</th><th>Significance</th><th>Weight</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Oswald</td><td><span class="rel-badge">shot and killed</span></td><td>JFK</td><td>The central act — official finding, undisputed</td><td class="weight-h">H</td></tr>
+        <tr><td>Jack Ruby</td><td><span class="rel-badge">shot and killed</span></td><td>Oswald</td><td>Silenced the only suspect before any trial</td><td class="weight-h">H</td></tr>
+        <tr><td>CIA</td><td><span class="rel-badge">had under surveillance</span></td><td>Oswald</td><td>CIA monitored Oswald but obscured Mexico City data</td><td class="weight-h">H</td></tr>
+        <tr><td>CIA</td><td><span class="rel-badge">withheld files from</span></td><td>Warren Commission</td><td>Confirmed by JFK Records Act releases (2017–2023)</td><td class="weight-h">H</td></tr>
+        <tr><td>FBI (Hoover)</td><td><span class="rel-badge">withheld evidence from</span></td><td>Warren Commission</td><td>Hoover had Oswald's full file but shared partial version</td><td class="weight-h">H</td></tr>
+        <tr><td>LBJ</td><td><span class="rel-badge">appointed</span></td><td>Warren Commission</td><td>Commission had political incentive to reach stability conclusion</td><td class="weight-h">H</td></tr>
+        <tr><td>Warren Commission</td><td><span class="rel-badge">concluded lone gunman</span></td><td>Lone Gunman finding</td><td>Official but disputed conclusion</td><td class="weight-h">H</td></tr>
+        <tr><td>HSCA</td><td><span class="rel-badge">concluded probable conspiracy</span></td><td>Conspiracy finding</td><td>Contradicts Warren Commission using acoustic evidence</td><td class="weight-h">H</td></tr>
+        <tr><td>Jack Ruby</td><td><span class="rel-badge">connected to</span></td><td>Mafia</td><td>FBI records show Ruby's documented mob contacts</td><td class="weight-h">H</td></tr>
+        <tr><td>Mafia</td><td><span class="rel-badge">had motive against</span></td><td>JFK / RFK</td><td>RFK was aggressively prosecuting organized crime</td><td class="weight-h">H</td></tr>
+        <tr><td>Oswald</td><td><span class="rel-badge">visited</span></td><td>Mexico City (Cuban + Soviet embassies)</td><td>6 weeks before assassination; surveillance obscured by CIA</td><td class="weight-h">H</td></tr>
+        <tr><td>JFK</td><td><span class="rel-badge">rejected</span></td><td>Bay of Pigs invasion</td><td>Gave CIA and Anti-Castro Cubans strong motive</td><td class="weight-h">H</td></tr>
+        <tr><td>Anti-Castro Cubans</td><td><span class="rel-badge">had motive against</span></td><td>JFK</td><td>Felt betrayed by JFK's refusal to provide military support</td><td class="weight-m">M</td></tr>
+        <tr><td>CIA</td><td><span class="rel-badge">funded and trained</span></td><td>Anti-Castro Cubans</td><td>CIA ran Bay of Pigs operation using exile groups</td><td class="weight-h">H</td></tr>
+        <tr><td>Oswald</td><td><span class="rel-badge">had ties to</span></td><td>CIA</td><td>Suspected handler relationship; CIA files withheld for decades</td><td class="weight-m">M</td></tr>
+        <tr><td>Grassy Knoll</td><td><span class="rel-badge">was site of alleged second shot</span></td><td>Dealey Plaza Shooting</td><td>HSCA acoustic evidence; multiple witness reports</td><td class="weight-m">M</td></tr>
+        <tr><td>JFK Records Act</td><td><span class="rel-badge">declassified</span></td><td>CIA Oswald files</td><td>Confirmed sustained concealment of surveillance records</td><td class="weight-h">H</td></tr>
+        <tr><td>LBJ</td><td><span class="rel-badge">succeeded</span></td><td>JFK as President</td><td>Had political motive; reversed key JFK policies on Vietnam</td><td class="weight-m">M</td></tr>
+        <tr><td>Hoover (FBI)</td><td><span class="rel-badge">was hostile to</span></td><td>Robert Kennedy</td><td>Known personal enmity; RFK had tried to limit Hoover's power</td><td class="weight-h">H</td></tr>
+        <tr><td>Oswald</td><td><span class="rel-badge">defected to</span></td><td>Soviet Union</td><td>1959–1962; raises questions about why CIA still trusted him</td><td class="weight-h">H</td></tr>
+        <tr><td>Warren Commission</td><td><span class="rel-badge">suppressed (alleged)</span></td><td>Conflicting evidence</td><td>McKnight documents multiple suppressed witness accounts</td><td class="weight-m">M</td></tr>
+        <tr><td>Multiple witnesses</td><td><span class="rel-badge">reported shots from</span></td><td>Grassy Knoll direction</td><td>57 witnesses heard shots from front; Warren Commission dismissed most</td><td class="weight-h">H</td></tr>
+        <tr><td>CIA</td><td><span class="rel-badge">was fired by</span></td><td>JFK (post Bay of Pigs)</td><td>JFK fired CIA Director Allen Dulles — who then served on Warren Commission</td><td class="weight-h">H</td></tr>
+        <tr><td>JFK</td><td><span class="rel-badge">was negotiating withdrawal from</span></td><td>Vietnam</td><td>Defense interests had motive; LBJ immediately escalated after JFK's death</td><td class="weight-m">M</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- STORY / NARRATIVE -->
+<section class="section" id="narrative">
+  <div class="section-header">
+    <div class="section-num">06 · Graph Narrative</div>
+    <h2>The <em>Story</em> the Graph Tells</h2>
+    <div class="divider"></div>
+    <p class="section-deck">By following the edges from central nodes, a 3-act narrative emerges automatically — without reading every document.</p>
+  </div>
+  <div class="acts">
+    <div class="act-card">
+      <div class="act-bar" style="background:var(--gold);"></div>
+      <div class="act-num" style="color:var(--gold);">ACT 1</div>
+      <div class="act-title">The Network of Motives</div>
+      <div class="act-body">
+        The graph shows that <em>at least four separate groups</em> had documented reasons to want JFK dead — the CIA (fired after Bay of Pigs), the Mafia (targeted by RFK), Anti-Castro Cubans (abandoned at Bay of Pigs), and elements of the military (opposed to Vietnam withdrawal). Oswald sits at the centre of several of these networks simultaneously — a node with unusually high betweenness connecting the CIA, the Soviet Union, Cuba, and the official narrative.
+      </div>
+      <div class="act-insight" style="border-color:var(--gold);color:var(--gold2);background:rgba(200,168,75,0.06);">
+        Graph insight: Oswald is not the end node — he is the bridge node. Real perpetrators in a conspiracy are usually found behind the highest-betweenness person, not at them.
+      </div>
+    </div>
+    <div class="act-card">
+      <div class="act-bar" style="background:var(--coral);"></div>
+      <div class="act-num" style="color:var(--coral);">ACT 2</div>
+      <div class="act-title">The Rupture and the Silence</div>
+      <div class="act-body">
+        The assassination itself (Nov 22) and Oswald's killing (Nov 24) are the two pivotal event nodes. The graph reveals a suspicious pattern: <em>every path from Oswald to a potential co-conspirator was severed within 48 hours</em>. Ruby's killing of Oswald cut the only thread that could have unraveled the network. The speed of this silencing, and Ruby's Mafia connections, make the "lone gunman" conclusion structurally implausible in the graph.
+      </div>
+      <div class="act-insight" style="border-color:var(--coral);color:#f4a08a;background:rgba(231,111,81,0.06);">
+        Graph insight: When the highest-betweenness node (Oswald) is removed from the graph within 48 hours of the event node, it is consistent with deliberate network pruning — eliminating the path from crime to perpetrator.
+      </div>
+    </div>
+    <div class="act-card">
+      <div class="act-bar" style="background:var(--purple);"></div>
+      <div class="act-num" style="color:#a09fe0;">ACT 3</div>
+      <div class="act-title">The Cover-Up Network</div>
+      <div class="act-body">
+        The Warren Commission outcome node connects backwards to LBJ (who formed it), the CIA and FBI (who withheld evidence from it), and Allen Dulles — the CIA Director JFK fired, who then served on the Commission. The HSCA (1979) created a competing outcome node: "probable conspiracy." The JFK Records Act (1992–2023) confirmed the CIA's sustained concealment. The cover-up, if it exists, was not a single act — it was a network of institutional choices.
+      </div>
+      <div class="act-insight" style="border-color:var(--purple);color:#a09fe0;background:rgba(83,74,183,0.07);">
+        Graph insight: The Warren Commission outcome node is connected to four entities who each had independent reasons to want a "lone gunman" conclusion — making institutional conspiracy more structurally stable than individual conspiracy.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- FINDINGS & CONCLUSION -->
+<section class="section" id="findings">
+  <div class="section-header">
+    <div class="section-num">07 · Our Findings</div>
+    <h2>What the Graph <em>Concludes</em></h2>
+    <div class="divider"></div>
+    <p class="section-deck">These are the specific findings from our knowledge graph analysis — derived from graph structure, not just from reading the text.</p>
+  </div>
+  <div class="findings">
+    <div class="finding">
+      <div class="finding-num">01</div>
+      <div class="finding-title">Oswald is a bridge, not an endpoint</div>
+      <div class="finding-body">In the graph, Oswald connects to the CIA, the Soviet Union, pro- and anti-Castro groups, and the official investigation. This is not the profile of a lone actor — it is the profile of a high-betweenness intermediary, typically found in the middle of a larger network.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">02</div>
+      <div class="finding-title">The investigation was structurally compromised</div>
+      <div class="finding-body">The Warren Commission graph node has edges from LBJ (who formed it), CIA (who withheld files), FBI (who withheld evidence), and Allen Dulles (who was fired by JFK). A body is structurally incapable of independence when its connections include people with a direct stake in the outcome.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">03</div>
+      <div class="finding-title">The network pruning pattern is suspicious</div>
+      <div class="finding-body">Ruby's killing of Oswald 48 hours after the assassination removed the only node that connected the crime to any potential co-conspirators. In graph theory terms, this is a targeted attack on the graph's most critical bridge — consistent with deliberate evidence elimination.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">04</div>
+      <div class="finding-title">Four independent motive clusters existed</div>
+      <div class="finding-body">The graph shows CIA, Mafia, Anti-Castro Cubans, and military-industrial interests as four separate clusters — each with independent, documented motives. The "lone gunman" theory requires all of these to be coincidental. The conspiracy reading requires only one to have acted.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">05</div>
+      <div class="finding-title">50 years of file concealment is a fact, not a theory</div>
+      <div class="finding-body">The CIA withheld Oswald files from 1963 to 2017–2023. This is not a conspiracy theory — it is a documented institutional fact confirmed by the JFK Records Act releases. Why an innocent surveillance relationship required 50 years of secrecy is an unanswered question.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">06</div>
+      <div class="finding-title">Two official investigations reach opposite conclusions</div>
+      <div class="finding-body">The Warren Commission (1964) says lone gunman. The HSCA (1979) says probable conspiracy. Both are US government investigations. The fact that these two conclusions co-exist with no formal resolution means the JFK case remains officially unsettled — not merely theoretically disputed.</div>
+    </div>
+  </div>
+
+  <div class="conclusion-box">
+    <h3>Our Conclusion</h3>
+    <p>
+      The knowledge graph does not prove who killed JFK. No analysis can do that without conclusive physical evidence. But the graph does reveal something important: the <strong>structural features of the network</strong> — Oswald as bridge node, the Warren Commission's compromised connections, the rapid removal of the key witness, and four independent motive clusters — are all <strong>inconsistent with a simple lone gunman event</strong>.
+    </p>
+    <p>
+      The graph supports the HSCA's 1979 conclusion of "probable conspiracy" — not as a definitive answer, but as the structurally more coherent reading of the available evidence. What NLP adds here is the ability to see the <em>pattern of connections</em>, not just the events — and patterns, in this case, speak loudly.
+    </p>
+    <div class="verdict">
+      "The Warren Commission's conclusion was not wrong because of what it said — it was wrong because of what it refused to see."
+      <span style="display:block;margin-top:6px;font-size:12px;color:var(--text3);font-style:normal;font-family:sans-serif;">— Gerald McKnight, Breach of Trust (2005)</span>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- MBA APPLICATION -->
+<section class="section" id="mba">
+  <div class="section-header">
+    <div class="section-num">08 · Business Applications</div>
+    <h2>Why This Matters for <em>Business Analytics</em></h2>
+    <div class="divider"></div>
+    <p class="section-deck">The same knowledge graph pipeline applies directly to business intelligence and risk analysis contexts.</p>
+  </div>
+  <div class="mba-grid">
+    <div class="mba-card">
+      <div class="mba-card-title">Fraud Detection</div>
+      <div class="mba-card-body">Map transactions, accounts, and individuals as nodes. High-betweenness accounts that connect otherwise unrelated clusters are likely hubs of fraudulent activity — the "Oswald" of the network.</div>
+    </div>
+    <div class="mba-card">
+      <div class="mba-card-title">Competitive Intelligence</div>
+      <div class="mba-card-body">Extract entities from competitor press releases and filings. Follow relationship edges to find which partnerships, investments, and personnel moves signal strategic pivots before they become public knowledge.</div>
+    </div>
+    <div class="mba-card">
+      <div class="mba-card-title">Supply Chain Risk</div>
+      <div class="mba-card-body">Model your supplier network as a graph. Nodes with the most connections are single points of failure — if removed, large parts of the chain break. Visualizing this in advance prevents the "48-hour crisis" pattern.</div>
+    </div>
+    <div class="mba-card">
+      <div class="mba-card-title">Regulatory Risk</div>
+      <div class="mba-card-body">Build graphs from enforcement actions, court cases, and lobbying records. When your firm shares multiple edges with entities under investigation, the graph shows exposure before any formal action begins.</div>
+    </div>
+    <div class="mba-card">
+      <div class="mba-card-title">M&A Due Diligence</div>
+      <div class="mba-card-body">Map the target company's relationships — investors, board members, past litigation, key customers. The graph reveals hidden liabilities that would take months to find through traditional document review.</div>
+    </div>
+    <div class="mba-card">
+      <div class="mba-card-title">Corporate Governance</div>
+      <div class="mba-card-body">Analyze board interlocks and executive networks as a graph. When the same individuals appear across multiple nodes in a dispute (like Allen Dulles on the Warren Commission), it signals structural conflict of interest.</div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>NLP Assignment · Knowledge Graph Analysis · BITS Pilani, Pilani Campus</strong><br>
+  MBA in Business Analytics · Natural Language Processing · April 2026
+  <div class="team-names">
+    <span class="team-name">Irshad Khan <span style="opacity:.5;font-size:11px;">(2025H1540832P)</span></span>
+    <span class="team-name">Kripa Kathuria <span style="opacity:.5;font-size:11px;">(2025H1540843P)</span></span>
+    <span class="team-name">Prashant Singh <span style="opacity:.5;font-size:11px;">(2025H1540845P)</span></span>
+  </div>
+  <div style="margin-top:16px;font-size:12px;color:var(--text3);">Group 9 · Case Study: JFK Assassination Conspiracy Theory</div>
+</footer>
+
+<!-- D3 KNOWLEDGE GRAPH SCRIPT -->
+<script>
+const nodes = [
+  {id:"JFK",          type:"Person",       desc:"35th US President. Killed Nov 22, 1963. Had refused Bay of Pigs support, negotiating with Cuba, considering Vietnam withdrawal."},
+  {id:"Oswald",       type:"Person",       desc:"Accused shooter. Ex-marine, USSR defector, CIA contacts. Killed by Ruby before trial. Graph's highest-betweenness node."},
+  {id:"Jack Ruby",    type:"Person",       desc:"Dallas nightclub owner with Mafia ties. Shot Oswald on live TV 48 hours after assassination — severing the only link to co-conspirators."},
+  {id:"LBJ",          type:"Person",       desc:"Succeeded JFK as President. Set up Warren Commission. Reversed Kennedy's Vietnam withdrawal plan within months."},
+  {id:"J.E. Hoover",  type:"Person",       desc:"FBI Director. Known enemy of RFK. FBI withheld key Oswald surveillance files from Warren Commission."},
+  {id:"CIA",          type:"Organization", desc:"Withheld Oswald files for 50+ years. Surveilled him in Mexico City weeks before assassination but obscured the data."},
+  {id:"Warren Comm.", type:"Organization", desc:"Set up by LBJ. Concluded lone gunman. McKnight: suppressed conflicting evidence to maintain political stability."},
+  {id:"HSCA",         type:"Organization", desc:"1979 Congressional investigation. Concluded 'probably a conspiracy' — the official counterpoint to Warren Commission."},
+  {id:"Mafia",        type:"Organization", desc:"RFK was aggressively prosecuting organized crime. Jack Ruby's mob connections are documented in FBI records."},
+  {id:"Anti-Castro",  type:"Organization", desc:"CIA-trained exile groups. Felt betrayed when JFK refused military support for Bay of Pigs invasion (1961)."},
+  {id:"FBI",          type:"Organization", desc:"Under Hoover, withheld Oswald's full surveillance file from Warren Commission investigation."},
+  {id:"JFK Shooting", type:"Event",        desc:"Nov 22, 1963. Dealey Plaza, Dallas. Multiple witnesses heard shots from different directions. 4 shots detected by HSCA."},
+  {id:"Oswald Killed",type:"Event",        desc:"Nov 24, 1963. Ruby shot Oswald in Dallas Police HQ on live TV. Eliminated only suspect before any questioning."},
+  {id:"Grassy Knoll", type:"Event",        desc:"Location of alleged second gunman. HSCA acoustic evidence supports a shot from here. 57 witnesses heard shots from front."},
+  {id:"Mexico City",  type:"Event",        desc:"Oct 1963: Oswald visited Cuban and Soviet embassies weeks before assassination. CIA surveillance was deliberately obscured."},
+  {id:"Cover-up",     type:"Outcome",      desc:"Alleged suppression of evidence by CIA, FBI, and Warren Commission. Confirmed in part by JFK Records Act declassifications."},
+  {id:"Lone Gunman",  type:"Outcome",      desc:"Warren Commission's official conclusion. Disputed by HSCA, historians, and the majority of public opinion polls."},
+  {id:"Conspiracy",   type:"Outcome",      desc:"HSCA's 1979 conclusion: 'probably a conspiracy'. Based on acoustic evidence and witness testimony inconsistencies."},
+];
+
+const links = [
+  {source:"Oswald",      target:"JFK Shooting", label:"shot (official finding)"},
+  {source:"Jack Ruby",   target:"Oswald Killed",label:"shot and killed"},
+  {source:"CIA",         target:"Oswald",        label:"surveilled"},
+  {source:"CIA",         target:"Warren Comm.",  label:"withheld files from"},
+  {source:"FBI",         target:"Warren Comm.",  label:"withheld evidence from"},
+  {source:"LBJ",         target:"Warren Comm.",  label:"appointed"},
+  {source:"Warren Comm.",target:"Lone Gunman",   label:"concluded"},
+  {source:"HSCA",        target:"Conspiracy",    label:"concluded"},
+  {source:"Jack Ruby",   target:"Mafia",         label:"connected to"},
+  {source:"Mafia",       target:"JFK",           label:"had motive against"},
+  {source:"Oswald",      target:"Mexico City",   label:"visited"},
+  {source:"JFK",         target:"CIA",           label:"fired (post Bay of Pigs)"},
+  {source:"Anti-Castro", target:"JFK",           label:"had motive against"},
+  {source:"CIA",         target:"Anti-Castro",   label:"funded and trained"},
+  {source:"Oswald",      target:"CIA",           label:"suspected ties to"},
+  {source:"Grassy Knoll",target:"JFK Shooting",  label:"second shooter location"},
+  {source:"JFK Shooting",target:"Oswald Killed", label:"led to"},
+  {source:"Oswald Killed",target:"Cover-up",     label:"enabled (by silencing)"},
+  {source:"LBJ",         target:"JFK",           label:"succeeded"},
+  {source:"J.E. Hoover", target:"FBI",           label:"controlled"},
+  {source:"Warren Comm.",target:"Cover-up",      label:"part of (alleged)"},
+  {source:"CIA",         target:"Cover-up",      label:"contributed to"},
+  {source:"Oswald",      target:"Anti-Castro",   label:"paradoxical ties to"},
+  {source:"JFK",         target:"Conspiracy",    label:"victim of (HSCA)"},
+];
+
+const COLOR = {
+  Person:"#c8a84b", Organization:"#2a9d8f",
+  Event:"#e76f51", Outcome:"#534ab7"
+};
+
+const svg = d3.select("#kg-svg");
+const wrap = document.getElementById("kg-wrap");
+
+function getW() { return wrap.clientWidth - 48; }
+function getH() { return 540; }
+
+let sim, nodeG, linkG, currentFilter = "all";
+
+function buildGraph() {
+  svg.selectAll("*").remove();
+  const W = getW(), H = getH();
+  svg.attr("viewBox", `0 0 ${W} ${H}`).style("height", H+"px");
+
+  const filtNodes = currentFilter === "all" ? nodes :
+    nodes.filter(n => n.type === currentFilter ||
+      links.some(l => (l.source === n.id || l.target === n.id) &&
+        nodes.find(nn => nn.id === (l.source===n.id?l.target:l.source) && nn.type===currentFilter)));
+  const nodeIds = new Set(filtNodes.map(n=>n.id));
+  const filtLinks = links.filter(l => nodeIds.has(typeof l.source==="object"?l.source.id:l.source) && nodeIds.has(typeof l.target==="object"?l.target.id:l.target));
+
+  const degree = {};
+  filtNodes.forEach(n => degree[n.id]=0);
+  filtLinks.forEach(l => {
+    const s = typeof l.source==="object"?l.source.id:l.source;
+    const t = typeof l.target==="object"?l.target.id:l.target;
+    degree[s]=(degree[s]||0)+1; degree[t]=(degree[t]||0)+1;
+  });
+
+  const defs = svg.append("defs");
+  defs.append("marker").attr("id","kg-arr").attr("viewBox","0 0 10 10").attr("refX",18).attr("refY",5).attr("markerWidth",6).attr("markerHeight",6).attr("orient","auto-start-reverse").append("path").attr("d","M2 1L8 5L2 9").attr("fill","none").attr("stroke","rgba(200,168,75,0.5)").attr("stroke-width",1.5).attr("stroke-linecap","round");
+
+  sim = d3.forceSimulation(filtNodes)
+    .force("link", d3.forceLink(filtLinks).id(d=>d.id).distance(120))
+    .force("charge", d3.forceManyBody().strength(-400))
+    .force("center", d3.forceCenter(W/2, H/2))
+    .force("collision", d3.forceCollide().radius(d=>rOf(d,degree)+20));
+
+  linkG = svg.append("g");
+  const link = linkG.selectAll("line").data(filtLinks).join("line")
+    .attr("stroke","rgba(200,168,75,0.25)").attr("stroke-width",1)
+    .attr("marker-end","url(#kg-arr)");
+
+  nodeG = svg.append("g");
+  const node = nodeG.selectAll("g").data(filtNodes).join("g")
+    .attr("cursor","pointer")
+    .call(d3.drag()
+      .on("start",(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y;})
+      .on("drag",(e,d)=>{d.fx=e.x;d.fy=e.y;})
+      .on("end",(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}))
+    .on("mouseover",(e,d)=>showTT(e,d))
+    .on("mousemove",moveTT)
+    .on("mouseout",hideTT);
+
+  node.append("circle")
+    .attr("r",d=>rOf(d,degree))
+    .attr("fill",d=>COLOR[d.type]||"#888")
+    .attr("fill-opacity",0.2)
+    .attr("stroke",d=>COLOR[d.type]||"#888")
+    .attr("stroke-width",1.5);
+
+  node.append("text")
+    .text(d=>d.id)
+    .attr("text-anchor","middle")
+    .attr("dy","0.35em")
+    .attr("font-size",d=>rOf(d,degree)>22?13:11)
+    .attr("font-family","sans-serif")
+    .attr("fill",d=>COLOR[d.type]||"#888")
+    .attr("font-weight","500")
+    .attr("pointer-events","none");
+
+  sim.on("tick",()=>{
+    link
+      .attr("x1",d=>clamp(d.source.x,0,W))
+      .attr("y1",d=>clamp(d.source.y,0,H))
+      .attr("x2",d=>clamp(d.target.x,0,W))
+      .attr("y2",d=>clamp(d.target.y,0,H));
+    node.attr("transform",d=>`translate(${clamp(d.x,20,W-20)},${clamp(d.y,20,H-20)})`);
+  });
+}
+
+function rOf(d,deg){const v=deg[d.id]||1;return Math.max(16,Math.min(32,14+v*2));}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+const tt = document.getElementById("kg-tooltip");
+function showTT(e,d){
+  tt.querySelector(".tt-title").textContent=d.id;
+  tt.querySelector(".tt-type").textContent=d.type;
+  tt.querySelector(".tt-desc").textContent=d.desc;
+  tt.style.display="block";
+  moveTT(e);
+}
+function moveTT(e){
+  tt.style.left=(e.clientX+14)+"px";
+  tt.style.top=(e.clientY-10)+"px";
+}
+function hideTT(){tt.style.display="none";}
+
+function filterGraph(type,btn){
+  currentFilter=type;
+  document.querySelectorAll(".kg-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  buildGraph();
+}
+
+buildGraph();
+window.addEventListener("resize",()=>buildGraph());
+</script>
+</body>
+</html>
